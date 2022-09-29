@@ -1,40 +1,345 @@
 <!DOCTYPE html>
 <html>
+
 <body>
-  <div id="row-0" style="width: 500px; height: 100px">
-    <div id="cell-00" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-    <div id="cell-01" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-    <div id="cell-02" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-    <div id="cell-03" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-    <div id="cell-04" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
+  <div id="container">
   </div>
-    <div id="row-1" style="width: 500px; height: 100px">
-    <div id="cell-10" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-    <div id="cell-11" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-    <div id="cell-12" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-    <div id="cell-13" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-    <div id="cell-14" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-  </div>
-    <div id="row-2" style="width: 500px; height: 100px">
-    <div id="cell-20" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-    <div id="cell-21" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-    <div id="cell-22" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-    <div id="cell-23" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-    <div id="cell-24" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-  </div>
-    <div id="row-3" style="width: 500px; height: 100px">
-    <div id="cell-30" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-    <div id="cell-31" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-    <div id="cell-32" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-    <div id="cell-33" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-    <div id="cell-34" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-  </div>
-    <div id="row-4" style="width: 500px; height: 100px">
-    <div id="cell-40" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-    <div id="cell-41" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-    <div id="cell-42" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-    <div id="cell-43" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-    <div id="cell-44" style="background-color: black; border: 2px; width: 100px; height: 100px"> </div>
-  </div>
+  <button> Submit </button>
+  <button> Reset </button>
+  <style>
+    #cell {
+      opacity: 0.3;
+      background-color: black;
+      width: 100px;
+      height: 100px;
+      display: inline-block;
+      border-left: 0px;
+      border-right: 4px;
+      border-top: 0px;
+      border-bottom: 0px;
+      border-style: solid;
+      border-color: white;
+    }
+
+    #cell:last-child {
+      border-right: 0px;
+    }
+
+    #cell[selected] {
+      opacity: 0.6;
+      background-color: brown;
+    }
+
+    #cell[suggested] {
+      opacity: 1;
+    }
+  </style>
+  <script>
+    const WIDTH = 5;
+    const HEIGHT = 5;
+    const LONGEST_PATH = 17;
+    let toggleSquare = (event) => {
+      event.target.getAttribute("selected") === "" ? event.target.removeAttribute("selected") : event.target.setAttribute("selected", "");
+    }
+    let container = document.getElementById("container");
+    for (let i = 0; i < HEIGHT; i++) {
+      let row = document.createElement("div");
+      row.setAttribute("id", "row-" + i);
+      container.appendChild(row);
+      // <div id='row-${i}' style='width: 500px; height: 100px'></div>
+      for (let j = 0; j < WIDTH; j++) {
+        let cell = document.createElement("div");
+        cell.setAttribute("id", "cell");
+        cell.setAttribute("name", "cell-" + i + j);
+        cell.setAttribute("index", `${i}${j}`);
+        // cell.setAttribute("selected", "");
+        cell.addEventListener("click", toggleSquare);
+        row.appendChild(cell);
+        // `<div id='cell-${ij}' style='width: 500px; height: 100px'></div>`
+      }
+    }
+    // Graph Code
+    function Graph() {
+      var neighbors = this.neighbors = {}; // Key = vertex, value = array of neighbors.
+      this.addEdge = function(u, v) {
+        if (neighbors[u] === undefined) { // Add the edge u -> v.
+          neighbors[u] = [];
+        }
+        neighbors[u].push(v);
+        if (neighbors[v] === undefined) { // Also add the edge v -> u in order
+          neighbors[v] = []; // to implement an undirected graph.
+        } // For a directed graph, delete
+        neighbors[v].push(u); // these four lines.
+      };
+      return this;
+    }
+
+    function bfs(graph, source) {
+      var queue = [{
+          vertex: source,
+          count: 0
+        }],
+        visited = {
+          source: true
+        },
+        tail = 0;
+      while (tail < queue.length) {
+        var u = queue[tail].vertex,
+          count = queue[tail++].count; // Pop a vertex off the queue.
+        print('distance from ' + source + ' to ' + u + ': ' + count);
+        graph.neighbors[u].forEach(function(v) {
+          if (!visited[v]) {
+            visited[v] = true;
+            queue.push({
+              vertex: v,
+              count: count + 1
+            });
+          }
+        });
+      }
+    }
+
+    function shortestPath(graph, source, target) {
+      if (source == target) { // Delete these four lines if
+        // print(source);          // you want to look for a cycle
+        return; // when the source is equal to
+      } // the target.
+      var queue = [source],
+        visited = {
+          source: true
+        },
+        predecessor = {},
+        tail = 0;
+      while (tail < queue.length) {
+        var u = queue[tail++], // Pop a vertex off the queue.
+          neighbors = graph.neighbors[u];
+        for (var i = 0; i < neighbors.length; ++i) {
+          var v = neighbors[i];
+          if (visited[v]) {
+            continue;
+          }
+          visited[v] = true;
+          if (v === target) { // Check if the path is complete.
+            var path = [v]; // If so, backtrack through the path.
+            while (u !== source) {
+              path.push(u);
+              u = predecessor[u];
+            }
+            path.push(u);
+            path.reverse();
+            // print(path.join(' &rarr; '));
+            return path.length;
+          }
+          predecessor[v] = u;
+          queue.push(v);
+        }
+      }
+      // print('there is no path from ' + source + ' to ' + target);
+    }
+    // Code for calculating longest paths
+    let allLongestPaths = [];
+    // use memory to reduce computation;
+    let allPaths = [];
+    // Create empty field;
+    let emptyPath = [];
+    for (let i = 0; i < HEIGHT; i++) {
+      emptyPath[i] = [];
+      for (let j = 0; j < WIDTH; j++) {
+        emptyPath[i][j] = false;
+      }
+    }
+    const pathEqual = (p1, p2) => {
+      for (let i = 0; i < p1.length; i++) {
+        for (let j = 0; j < p1[i].length; j++) {
+          if (p1[i][j] != p2[i][j]) return false;
+        }
+      }
+      return true;
+    }
+    const rotatePath = (p) => {
+      // console.log("rotating", p);
+      p1 = [];
+      p2 = [];
+      p3 = [];
+      p4 = [];
+      for (let i = 0; i < p.length; i++) {
+        p1[i] = [];
+        p2[i] = [];
+        p3[i] = [];
+        p4[i] = [];
+        for (let j = 0; j < p[i].length; j++) {
+          p1[i][j] = p[i][j]
+          p2[i][j] = p[p.length - 1 - i][p.length - 1 - j]
+          p3[i][j] = p[j][i];
+          p4[i][j] = p[p.length - 1 - j][p.length - 1 - i]
+        }
+      }
+      return [p1, p2, p3, p4];
+    }
+    const pathPresent = (allPaths, path) => {
+      // console.log("path present", allPaths.length);
+      // return false;
+      // const [p1, p2, p3, p4] = rotatePath(path)
+      for (let i = 0; i < allPaths.length; i++) {
+        // console.log(allPaths.length, i);
+        const p = allPaths[i];
+        if (pathEqual(p, path)) return true;
+        // console.log("checking path equal", p, path)
+        // console.log("path is not equal", i);
+        // if (pathEqual(p, p1)) return true;
+        // if (pathEqual(p, p2)) return true;
+        // if (pathEqual(p, p3)) return true;
+        // if (pathEqual(p, p4)) return true;
+      }
+      return false;
+    }
+    const longestPath = (path) => {
+      // convert path to node graph.
+      const graph = new Graph();
+      for (let i = 0; i < HEIGHT; i++) {
+        for (let j = 0; j < WIDTH; j++) {
+          // graph.addVertex(`${i}${j}`);
+          // console.log(`adding vertex ${i}${j}`)
+        }
+      }
+      for (let i = 0; i < HEIGHT; i++) {
+        for (let j = 0; j < WIDTH; j++) {
+          if (path[i][j] === true) {
+            // console.log("adding edge", i, j)
+            if (path[i + 1] && path[i + 1][j] === true) graph.addEdge(`${i}${j}`, `${i+1}${j}`)
+            // console.log("adding edge", i, j)
+            if (path[i - 1] && path[i - 1][j] === true) graph.addEdge(`${i}${j}`, `${i-1}${j}`)
+            // console.log("adding edge", i, j)
+            if (path[i][j + 1] === true) graph.addEdge(`${i}${j}`, `${i}${j+1}`)
+            // console.log("adding edge", i, j)
+            if (path[i][j - 1] === true) graph.addEdge(`${i}${j}`, `${i}${j-1}`)
+          }
+        }
+      }
+      const distances = []
+      for (let i = 0; i < Math.floor(HEIGHT / 2); i++) {
+        for (let j = 0; j < Math.floor(WIDTH / 2); j++) {
+          for (let k = 0; k < HEIGHT; k++) {
+            for (let l = 0; l < WIDTH; l++) {
+              if (path[i][j] === true && path[k][l] === true) {
+                const distance = shortestPath(graph, `${i}${j}`, `${k}${l}`);
+                distances.push(distance);
+                if (distance === LONGEST_PATH) console.log("Longest path", path, i, j, k, l)
+              }
+            }
+          }
+        }
+      }
+      // console.log("distances", distances, _.max(distances.filter(d => d != null)))
+      if (_.max(distances.filter(d => d != null)) === LONGEST_PATH) {
+        console.log("distances", distances, _.max(distances.filter(d => d != null)))
+        console.log(path);
+      }
+      return _.max(distances.filter(d => d != null));
+    }
+    // return false if deadend or already walked
+    const move = (nodes, i, j) => {
+      if (i < 0 || j < 0) return false;
+      if (i >= HEIGHT) return false;
+      if (j >= WIDTH) return false;
+      if (nodes[i][j] === true) return false;
+      nodes[i][j] = true;
+      return true;
+    }
+    const crawl = (path, i, j) => {
+      // console.log("crawling", i, j, path)
+      // console.log(pathPresent(allPaths, path))
+      // console.log(allPaths.length);
+      if (pathPresent(allPaths, path)) return;
+      else allPaths.push(path);
+      // console.log("crawling", i, j, path)
+      const path1 = clone(path)
+      move(path1, i - 1, j) ? crawl(path1, i - 1, j) : longestPath(path1) === LONGEST_PATH && allLongestPaths.push(path1);
+      const path2 = clone(path)
+      move(path2, i + 1, j) ? crawl(path2, i + 1, j) : longestPath(path2) === LONGEST_PATH && allLongestPaths.push(path2);
+      const path3 = clone(path)
+      move(path3, i, j - 1) ? crawl(path3, i, j - 1) : longestPath(path3) === LONGEST_PATH && allLongestPaths.push(path3);
+      const path4 = clone(path)
+      move(path4, i, j + 1) ? crawl(path4, i, j + 1) : longestPath(path4) === LONGEST_PATH && allLongestPaths.push(path4);
+    }
+    // Starting at each possible point crawl and save maximum length paths
+    const clone = (e) => JSON.parse(JSON.stringify(e));
+    // This function kills pc
+    const computeLongestPathsFromScracth = () => {
+      for (let i = 0; i < Math.floor(HEIGHT / 2); i++) {
+        for (let j = 0; j < Math.floor(WIDTH / 2); j++) {
+          const path = clone(emptyPath);
+          path[i][j] = true;
+          crawl(path, i, j)
+          // i = 100;
+          // j = 100;
+        }
+      }
+      console.log(allLongestPaths)
+      let allLongestPathsWithRotations = _.uniqWith(allLongestPaths, pathEqual);
+      console.log(allLongestPathsWithRotations)
+      // Add rotations
+      allLongestPathsWithRotations = allLongestPathsWithRotations.reduce((s, c) => {
+        s = s.concat(rotatePath(c));
+        return s;
+      }, [])
+      console.log(allLongestPathsWithRotations)
+      allLongestPathsWithRotations = _.uniqWith(allLongestPathsWithRotations, pathEqual);
+      return allLongestPathsWithRotations;
+    }
+    const loadCachedPaths = () => {
+      return JSON.parse("[[[true,true,true,true,true],[true,false,false,false,false],[true,true,true,true,true],[false,false,false,false,true],[true,true,true,true,true]],[[true,false,true,true,true],[true,false,true,false,true],[true,false,true,false,true],[true,false,true,false,true],[true,true,true,false,true]],[[true,true,true,false,true],[true,false,true,false,true],[true,false,true,false,true],[true,false,true,false,true],[true,false,true,true,true]],[[true,true,true,true,true],[false,false,false,false,true],[true,true,true,true,true],[true,false,false,false,false],[true,true,true,true,true]],[[true,true,true,true,false],[true,false,false,true,true],[true,true,true,false,true],[false,false,false,false,true],[true,true,true,true,true]],[[false,true,true,true,true],[true,true,false,false,true],[true,false,true,false,true],[true,false,true,false,true],[true,true,true,false,true]],[[true,true,true,true,false],[true,false,false,true,true],[true,false,true,false,true],[true,false,true,false,true],[true,false,true,true,true]],[[true,true,true,true,true],[false,false,false,false,true],[true,true,true,false,true],[true,false,false,true,true],[true,true,true,true,false]],[[true,true,true,true,true],[true,false,false,false,true],[true,true,true,false,true],[false,false,false,false,true],[true,true,true,true,true]],[[true,true,true,true,true],[true,false,false,false,true],[true,false,true,false,true],[true,false,true,false,true],[true,true,true,false,true]],[[true,true,true,true,true],[true,false,false,false,true],[true,false,true,false,true],[true,false,true,false,true],[true,false,true,true,true]],[[true,true,true,true,true],[false,false,false,false,true],[true,true,true,false,true],[true,false,false,false,true],[true,true,true,true,true]],[[true,false,true,true,true],[true,false,true,false,true],[true,true,true,false,true],[false,false,false,false,true],[true,true,true,true,true]],[[true,true,true,true,true],[true,false,false,false,true],[true,true,true,false,true],[false,false,true,false,true],[true,true,true,false,true]],[[true,true,true,true,true],[true,false,false,false,true],[true,false,true,true,true],[true,false,true,false,false],[true,false,true,true,true]],[[true,true,true,true,true],[false,false,false,false,true],[true,true,true,false,true],[true,false,true,false,true],[true,false,true,true,true]],[[true,true,true,true,false],[true,false,false,true,true],[true,true,true,false,true],[false,false,false,true,true],[true,true,true,true,false]],[[false,true,true,true,false],[true,true,false,true,true],[true,false,true,false,true],[true,false,true,false,true],[true,true,true,false,true]],[[false,true,true,true,false],[true,true,false,true,true],[true,false,true,false,true],[true,false,true,false,true],[true,false,true,true,true]],[[true,true,true,true,false],[false,false,false,true,true],[true,true,true,false,true],[true,false,false,true,true],[true,true,true,true,false]],[[true,true,true,true,true],[true,false,false,false,true],[true,true,true,false,true],[false,false,false,true,true],[true,true,true,true,false]],[[true,true,true,true,false],[true,false,false,true,true],[true,false,true,false,true],[true,false,true,false,true],[true,true,true,false,true]],[[false,true,true,true,true],[true,true,false,false,true],[true,false,true,false,true],[true,false,true,false,true],[true,false,true,true,true]],[[true,true,true,true,false],[false,false,false,true,true],[true,true,true,false,true],[true,false,false,false,true],[true,true,true,true,true]],[[true,false,true,true,true],[true,false,true,false,true],[true,true,true,false,true],[false,false,false,true,true],[true,true,true,true,false]],[[true,true,true,true,false],[true,false,false,true,true],[true,true,true,false,true],[false,false,true,false,true],[true,true,true,false,true]],[[false,true,true,true,true],[true,true,false,false,true],[true,false,true,true,true],[true,false,true,false,false],[true,false,true,true,true]],[[true,true,true,true,false],[false,false,false,true,true],[true,true,true,false,true],[true,false,true,false,true],[true,false,true,true,true]],[[true,true,true,true,true],[true,false,false,false,false],[true,false,true,true,true],[true,false,true,false,true],[true,true,true,false,true]],[[true,true,true,false,true],[false,false,true,false,true],[true,true,true,false,true],[true,false,false,false,true],[true,true,true,true,true]],[[false,true,true,true,true],[true,true,false,false,false],[true,false,true,true,true],[true,false,true,false,true],[true,true,true,false,true]],[[true,true,true,false,true],[false,false,true,false,true],[true,true,true,false,true],[true,false,false,true,true],[true,true,true,true,false]],[[true,true,true,true,true],[true,false,false,false,true],[true,true,false,true,true],[false,true,false,true,false],[true,true,false,true,true]],[[true,true,true,false,true],[true,false,true,true,true],[true,false,false,false,false],[true,false,true,true,true],[true,true,true,false,true]],[[true,false,true,true,true],[true,true,true,false,true],[false,false,false,false,true],[true,true,true,false,true],[true,false,true,true,true]],[[true,true,false,true,true],[false,true,false,true,false],[true,true,false,true,true],[true,false,false,false,true],[true,true,true,true,true]],[[true,true,true,false,true],[true,false,true,false,true],[true,false,true,true,true],[true,true,false,false,false],[false,true,true,true,true]],[[true,false,true,true,true],[true,false,true,false,false],[true,false,true,true,true],[true,true,false,false,true],[false,true,true,true,true]],[[true,true,true,true,true],[true,false,false,false,true],[true,false,true,true,true],[true,true,false,false,false],[false,true,true,true,true]],[[true,false,true,true,true],[true,false,true,false,true],[true,false,true,false,true],[true,true,false,false,true],[false,true,true,true,true]],[[false,true,true,true,true],[true,true,false,false,true],[true,false,true,true,true],[true,true,false,false,false],[false,true,true,true,true]],[[true,false,true,true,true],[true,false,true,false,true],[true,false,true,false,true],[true,true,false,true,true],[false,true,true,true,false]],[[true,true,true,false,true],[true,false,true,false,true],[true,false,true,true,true],[true,false,false,false,false],[true,true,true,true,true]],[[true,false,true,true,true],[true,false,true,false,false],[true,false,true,true,true],[true,false,false,false,true],[true,true,true,true,true]],[[true,true,true,true,true],[true,false,false,false,true],[true,false,true,true,true],[true,false,false,false,false],[true,true,true,true,true]],[[true,false,true,true,true],[true,false,true,false,true],[true,false,true,false,true],[true,false,false,false,true],[true,true,true,true,true]],[[false,true,true,true,true],[true,true,false,false,true],[true,false,true,true,true],[true,false,false,false,false],[true,true,true,true,true]],[[true,false,true,true,true],[true,false,true,false,true],[true,false,true,false,true],[true,false,false,true,true],[true,true,true,true,false]]]")
+    }
+    document.querySelector("body").onload = function() {
+      window.CP.PenTimer.MAX_TIME_IN_LOOP_WO_EXIT = 6000;
+      let allLongestPathsWithRotations = [];
+      // allLogestPathsWithRotations = computeLongestPathsFromScracth();
+      // console.log(JSON.stringify(allLogestPathsWithRotations))
+      // calculating longest paths takes a very long time, load from cache.
+      allLongestPathsWithRotations = loadCachedPaths();
+      // console.log(allLogestPathsWithRotations)
+      // console.log(JSON.stringify(allLogestPathsWithRotations))
+      onSubmit = (e) => {
+        selectedMatrix = [];
+        for (let i = 0; i < HEIGHT; i++) {
+          selectedMatrix[i] = [];
+          for (let j = 0; j < WIDTH; j++) {
+            document.querySelector(`[index="${i}${j}"]`).removeAttribute("suggested");
+            selectedMatrix[i][j] = document.querySelector(`[index="${i}${j}"]`).getAttribute("selected") === "";
+          }
+        }
+        const overlaps = allLongestPathsWithRotations.map(path => {
+          overlap = 0;
+          for (let i = 0; i < path.length; i++) {
+            for (let j = 0; j < path[i].length; j++) {
+              if (selectedMatrix[i][j] === true && path[i][j] === true) overlap++
+            }
+          }
+          return overlap;
+        })
+        console.log(overlaps, _.max(overlaps), overlaps.indexOf(_.max(overlaps)));
+        const maxOverlapIndex = overlaps.indexOf(_.max(overlaps));
+        const maxOverlapPath = allLongestPathsWithRotations[maxOverlapIndex];
+        for (let i = 0; i < maxOverlapPath.length; i++) {
+          for (let j = 0; j < maxOverlapPath[i].length; j++) {
+            if (maxOverlapPath[i][j] === true) document.querySelector(`[index="${i}${j}"]`).setAttribute("suggested", "");
+          }
+        }
+      }
+      document.getElementsByTagName("button")[0].addEventListener("click", onSubmit);
+      const onReset = () => {
+        for (let i = 0; i < HEIGHT; i++) {
+          for (let j = 0; j < WIDTH; j++) {
+            document.querySelector(`[index="${i}${j}"]`).removeAttribute("suggested");
+            document.querySelector(`[index="${i}${j}"]`).removeAttribute("selected");
+          }
+        }
+      }
+      document.getElementsByTagName("button")[1].addEventListener("click", onReset);
+    }
+  </script>
+  <div id="display">
+    </id>
 </body>
+
 </html>
